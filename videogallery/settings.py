@@ -65,11 +65,13 @@ WSGI_APPLICATION = 'videogallery.wsgi.application'
 # Simple default: SQLite (no separate DB server needed to get started)
 
 import dj_database_url
+import os
 
 DATABASES = {
-    'default': dj_database_url.parse(env('DATABASE_URL'))
+    "default": dj_database_url.parse(
+        os.environ.get("DATABASE_URL")
+    )
 }
-
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
