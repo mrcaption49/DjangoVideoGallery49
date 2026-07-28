@@ -1,0 +1,51 @@
+{% extends 'gallery/base.html' %}
+
+{% block title %}{{ video.title }}{% endblock %}
+
+{% block content %}
+<style>
+	.player-wrap {
+		max-width: 900px;
+		margin: 0 auto;
+	}
+
+	.player-wrap video {
+		width: 100%;
+		max-height: 65vh;
+		border-radius: 10px;
+		background: #000;
+		display: block;
+	}
+
+	.player-wrap h1 {
+		margin: 1.25rem 0 0.4rem;
+	}
+
+	.meta {
+		color: var(--ink-dim);
+		font-size: 0.85rem;
+		margin: 0 0 1rem;
+	}
+
+	.description {
+		color: var(--ink);
+		white-space: pre-line;
+	}
+
+	.back-link {
+		display: inline-block;
+		margin-bottom: 1.25rem;
+		font-size: 0.9rem;
+	}
+</style>
+
+<div class="player-wrap">
+	<a class="back-link" href="{% url 'gallery_list' %}">&larr; Back to gallery</a>
+
+	<video src="{{ video.video_file.url }}" controls autoplay></video>
+
+	<h1>{{ video.title }}</h1>
+	<p class="meta">Uploaded {{ video.uploaded_at|date:"M d, Y" }}</p>
+	<p class="description">{{ video.description|default:"No description." }}</p>
+</div>
+{% endblock %}

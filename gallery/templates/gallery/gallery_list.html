@@ -1,0 +1,722 @@
+{% extends 'gallery/base.html' %}
+
+{% block title %}Video Gallery{% endblock %}
+
+{% block content %}
+<style>
+    /* ---------- Light-theme overrides for base.html's chrome ---------- */
+    body {
+        background: #f7f3ea !important;
+        color: #2c2822 !important;
+    }
+
+    .topbar {
+        background: #ffffff !important;
+        border-bottom: 1px solid #ded3bc !important;
+    }
+
+    .topbar .brand {
+        color: #2c2822 !important;
+    }
+
+    .btn {
+        background: #c17d2e !important;
+        color: #ffffff !important;
+    }
+
+    .btn:hover {
+        opacity: 1 !important;
+        filter: brightness(1.08);
+    }
+
+    .messages li {
+        background: #f0e9da !important;
+        border: 1px solid #ded3bc !important;
+        color: #2c2822 !important;
+    }
+
+    .container {
+        max-width: 1800px !important;
+    }
+
+    /* ---------- Theme tokens (matched to the PixelVault photo gallery) ---------- */
+    #videoVault {
+        --bg: #f7f3ea;
+        --surface: #ffffff;
+        --surface-2: #f0e9da;
+        --ink: #2c2822;
+        --ink-dim: #8a7f6b;
+        --amber: #c17d2e;
+        --amber-dim: #d9ac6e;
+        --rust: #b5502e;
+        --line: #ded3bc;
+        --sprocket-bg: #2c2822;
+        --shadow: rgba(44, 40, 34, 0.08);
+        --skeleton-a: #efe8d8;
+        --skeleton-b: #f8f4ea;
+
+        font-family: 'Inter', sans-serif;
+        color: var(--ink);
+    }
+
+    #videoVault * { box-sizing: border-box; }
+
+    /* ---------- Masthead ---------- */
+    #videoVault .masthead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 1.1rem;
+        margin-bottom: 2.2rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    #videoVault .masthead-left {
+        display: flex;
+        align-items: baseline;
+        gap: 0.9rem;
+    }
+
+    #videoVault h1 {
+        font-family: 'Fraunces', serif;
+        font-optical-sizing: auto;
+        font-weight: 600;
+        font-size: 1.9rem;
+        letter-spacing: 0.01em;
+        margin: 0;
+    }
+
+    #videoVault h1 span {
+        color: var(--amber);
+        font-style: italic;
+        font-weight: 500;
+    }
+
+    #videoVault .roll-meta {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-dim);
+    }
+
+    /* ---------- Layout: index sidebar + reel grid ---------- */
+    #videoVault .layout {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 2.5rem;
+        align-items: start;
+    }
+
+    @media (max-width: 860px) {
+        #videoVault .layout { grid-template-columns: 1fr; }
+    }
+
+    #videoVault .sidebar-col { position: sticky; top: 1.75rem; }
+
+    #videoVault .index-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 2px;
+        position: relative;
+        padding-top: 0.4rem;
+        box-shadow: 0 1px 3px var(--shadow);
+    }
+
+    #videoVault .index-card::before,
+    #videoVault .index-card::after {
+        content: "";
+        position: absolute;
+        left: 14px;
+        right: 14px;
+        height: 6px;
+        background-image: repeating-linear-gradient(90deg, var(--bg) 0 6px, transparent 6px 12px);
+        opacity: 0.8;
+    }
+
+    #videoVault .index-card::before { top: 6px; }
+    #videoVault .index-card::after { bottom: 6px; }
+
+    #videoVault .index-head {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.7rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-dim);
+        text-align: center;
+        padding: 1rem 0.75rem 0.85rem;
+        border-bottom: 1px dashed var(--line);
+        margin: 0.5rem 0.75rem 0;
+    }
+
+    #videoVault .index-list {
+        list-style: none;
+        margin: 0;
+        padding: 0.4rem 0.75rem 1.1rem;
+    }
+
+    #videoVault .index-list li a {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        text-decoration: none;
+        padding: 0.55rem 0.5rem;
+        border-radius: 3px;
+        font-size: 0.92rem;
+        color: var(--ink);
+        transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease;
+    }
+
+    #videoVault .index-list li a::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        border: 1px solid var(--amber-dim);
+        flex: none;
+    }
+
+    #videoVault .index-list li a.is-active {
+        color: var(--amber);
+        background: var(--surface-2);
+    }
+
+    #videoVault .index-list li a.is-active::before {
+        background: var(--amber);
+        border-color: var(--amber);
+    }
+
+    #videoVault .index-list li a:hover {
+        background: var(--surface-2);
+        color: var(--amber);
+        padding-left: 0.75rem;
+    }
+
+    #videoVault .index-list li a:hover::before {
+        background: var(--amber);
+        border-color: var(--amber);
+    }
+
+    #videoVault .add-video-row {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 1rem 1rem 1.2rem;
+        border-top: 1px dashed var(--line);
+        margin: 0 0.75rem;
+    }
+
+    #videoVault .shutter-btn {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 46px;
+        height: 46px;
+        flex: none;
+        border-radius: 50%;
+        background:
+            radial-gradient(circle at center, var(--surface) 0 34%, transparent 35%),
+            conic-gradient(var(--amber) 0turn, var(--amber-dim) 1turn);
+        color: var(--bg);
+        text-decoration: none;
+        font-size: 1.15rem;
+        transition: transform 0.2s ease, filter 0.2s ease;
+    }
+
+    #videoVault .shutter-btn i { color: #ffffff; position: relative; }
+
+    #videoVault .shutter-btn:hover {
+        transform: rotate(45deg);
+        filter: brightness(1.08);
+    }
+
+    #videoVault .add-video-copy .t { font-size: 0.88rem; font-weight: 500; display: block; }
+
+    #videoVault .add-video-copy .s {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.68rem;
+        color: var(--ink-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    /* ---------- Reel grid (fixed-size cards, three across) ---------- */
+    #videoVault .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.75rem;
+    }
+
+    @media (max-width: 1100px) {
+        #videoVault .grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 680px) {
+        #videoVault .grid { grid-template-columns: 1fr; }
+    }
+
+    #videoVault .frame {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 2px;
+        overflow: hidden;
+        position: relative;
+        transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        box-shadow: 0 1px 3px var(--shadow);
+    }
+
+    #videoVault .frame:hover,
+    #videoVault .frame:focus-within {
+        transform: translateY(-3px);
+        border-color: var(--amber-dim);
+        box-shadow: 0 8px 20px var(--shadow);
+    }
+
+    #videoVault .frame .sprockets {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 10px;
+        background: var(--sprocket-bg);
+    }
+
+    #videoVault .frame .sprockets span {
+        width: 6px;
+        height: 9px;
+        background: var(--bg);
+        border-radius: 1px;
+    }
+
+    #videoVault .shot {
+        position: relative;
+        display: block;
+        text-decoration: none;
+        cursor: pointer;
+        background: #000;
+    }
+
+    #videoVault .video-thumbnail {
+        display: block;
+        width: 100%;
+        height: 260px;
+        object-fit: cover;
+        pointer-events: none;
+        background: #000;
+    }
+
+    #videoVault .play-badge {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #videoVault .play-badge span {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: rgba(15, 13, 10, 0.68);
+        border: 1px solid rgba(241, 234, 217, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    #videoVault .play-badge span::before {
+        content: "";
+        border-style: solid;
+        border-width: 8px 0 8px 13px;
+        border-color: transparent transparent transparent #f1ead9;
+        margin-left: 4px;
+    }
+
+    #videoVault .frame:hover .play-badge span {
+        transform: scale(1.08);
+        background: var(--amber);
+    }
+
+    #videoVault .frame-no {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.04em;
+        color: var(--amber-dim);
+        background: rgba(15, 13, 10, 0.78);
+        padding: 2px 7px;
+        border-radius: 2px;
+        opacity: 0;
+        transform: translateY(-3px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    #videoVault .frame:hover .frame-no,
+    #videoVault .frame:focus-within .frame-no {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    #videoVault .frame-runtime {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.03em;
+        color: #f1ead9;
+        background: rgba(15, 13, 10, 0.78);
+        padding: 2px 7px;
+        border-radius: 2px;
+    }
+
+    #videoVault .frame-body { padding: 0.85rem 0.95rem 1rem; text-align: left; }
+
+    #videoVault .frame-category {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--ink-dim);
+        margin: 0 0 0.45rem;
+    }
+
+    #videoVault .frame-category em { font-style: normal; color: var(--amber); }
+
+    #videoVault .frame-title {
+        font-family: 'Fraunces', serif;
+        font-weight: 500;
+        font-size: 1.02rem;
+        margin: 0 0 0.35rem;
+        line-height: 1.3;
+        color: var(--ink);
+    }
+
+    #videoVault .frame-desc {
+        font-size: 0.83rem;
+        line-height: 1.45;
+        color: var(--ink-dim);
+        margin: 0 0 0.85rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    #videoVault .btn-view {
+        display: block;
+        width: 100%;
+        text-align: center;
+        text-decoration: none;
+        padding: 0.5rem 0;
+        font-size: 0.82rem;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        color: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 2px;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    #videoVault .btn-view:hover {
+        background: var(--amber);
+        border-color: var(--amber);
+        color: #ffffff;
+    }
+
+    /* ---------- Empty state ---------- */
+    #videoVault .empty-state {
+        text-align: center;
+        padding: 4rem 1.5rem;
+        border: 1px dashed var(--line);
+        border-radius: 4px;
+    }
+
+    #videoVault .empty-state .bi { font-size: 1.8rem; color: var(--amber-dim); }
+
+    #videoVault .empty-state h3 {
+        font-family: 'Fraunces', serif;
+        font-weight: 500;
+        font-style: italic;
+        color: var(--ink-dim);
+        margin: 0.75rem 0 0.35rem;
+    }
+
+    #videoVault .empty-state p { font-size: 0.85rem; color: var(--ink-dim); margin: 0 0 1.4rem; }
+
+    #videoVault .empty-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 999px;
+        background: var(--amber);
+        color: #ffffff;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: filter 0.15s ease;
+    }
+
+    #videoVault .empty-cta:hover { filter: brightness(1.08); }
+
+    /* ---------- Screening room (video lightbox) ---------- */
+    #videoVault .lightbox {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 13, 10, 0.9);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        padding: 2rem;
+    }
+
+    #videoVault .lightbox.is-open { display: flex; }
+
+    #videoVault .lightbox-inner {
+        max-width: min(960px, 92vw);
+        max-height: 88vh;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.9rem;
+    }
+
+    #videoVault .lightbox-inner video {
+        width: 100%;
+        max-height: 66vh;
+        border-radius: 2px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        background: #000;
+    }
+
+    #videoVault .lightbox-title {
+        font-family: 'Fraunces', serif;
+        font-weight: 500;
+        font-size: 1.15rem;
+        color: #f1ead9;
+        text-align: center;
+        margin: 0;
+    }
+
+    #videoVault .lightbox-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.75rem;
+        color: #d8cdb6;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    #videoVault .lightbox-meta a { color: var(--amber); text-decoration: underline; }
+
+    #videoVault .lightbox-close,
+    #videoVault .lightbox-nav {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #f1ead9;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1.1rem;
+        transition: background 0.15s ease;
+    }
+
+    #videoVault .lightbox-close:hover,
+    #videoVault .lightbox-nav:hover { background: rgba(255, 255, 255, 0.18); }
+
+    #videoVault .lightbox-close { top: 1.5rem; right: 1.5rem; }
+    #videoVault .lightbox-nav.prev { left: 1.5rem; top: 50%; transform: translateY(-50%); }
+    #videoVault .lightbox-nav.next { right: 1.5rem; top: 50%; transform: translateY(-50%); }
+
+    @media (max-width: 640px) {
+        #videoVault .lightbox-nav { display: none; }
+    }
+
+    #videoVault a:focus-visible,
+    #videoVault button:focus-visible {
+        outline: 2px solid var(--amber);
+        outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        #videoVault * { transition: none !important; animation: none !important; }
+    }
+</style>
+
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+<div id="videoVault">
+    <div class="masthead">
+        <div class="masthead-left">
+            <h1>Video<span>Vault</span></h1>
+            <div class="roll-meta">{{ videos|length }} reel{{ videos|length|pluralize }} — {% now "M Y" %}</div>
+        </div>
+    </div>
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <div class="sidebar-col">
+            <div class="index-card">
+                <div class="index-head">Screening Index</div>
+                <ul class="index-list">
+                    <li><a href="{% url 'gallery_list' %}" class="{% if not request.GET.category %}is-active{% endif %}">All reels</a></li>
+                    {% for category in categories %}
+                    <li>
+                        <a href="{% url 'gallery_list' %}?category={{ category.name }}"
+                           class="{% if request.GET.category == category.name %}is-active{% endif %}">
+                            {{ category.name }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                <div class="add-video-row">
+                    <a href="{% url 'upload_video' %}" class="shutter-btn" aria-label="Add video">
+                        <i class="bi bi-plus-lg"></i>
+                    </a>
+                    <span class="add-video-copy">
+                        <span class="t">Add a video</span>
+                        <span class="s">Load new reel</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reel grid -->
+        <div>
+            {% if videos %}
+            <div class="grid">
+                {% for video in videos %}
+                <div class="frame">
+                    <div class="sprockets">
+                        <span></span><span></span><span></span><span></span><span></span>
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+
+                    <a href="{% url 'video_detail' video.pk %}"
+                       class="shot lightbox-trigger"
+                       aria-label="Play {{ video.title }}"
+                       data-index="{{ forloop.counter0 }}"
+                       data-title="{{ video.title }}"
+                       data-category="{{ video.category|default:'Unsorted' }}"
+                       data-detail-url="{% url 'video_detail' video.pk %}"
+                       data-src="{{ video.video_file.url }}">
+                        <video class="video-thumbnail" src="{{ video.video_file.url }}" preload="metadata" muted></video>
+                        <span class="play-badge"><span></span></span>
+                        <span class="frame-no">No. {{ forloop.counter|stringformat:"03d" }}</span>
+                    </a>
+
+                    <div class="sprockets">
+                        <span></span><span></span><span></span><span></span><span></span>
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+
+                    <div class="frame-body">
+                        <p class="frame-category">Category — <em>{{ video.category|default:"Unsorted" }}</em></p>
+                        <h3 class="frame-title">{{ video.title }}</h3>
+                        <p class="frame-desc">{{ video.description }}</p>
+                        <a href="{% url 'video_detail' video.pk %}" class="btn-view">Play video</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-camera-reels"></i>
+                <h3>No reels loaded yet</h3>
+                <p>Upload your first clip to start the screening room.</p>
+                <a href="{% url 'upload_video' %}" class="empty-cta"><i class="bi bi-plus-lg"></i> Add a video</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Screening room (video lightbox) -->
+    <div class="lightbox" id="videoLightbox" role="dialog" aria-modal="true" aria-label="Video preview">
+        <button type="button" class="lightbox-close" id="videoLightboxClose" aria-label="Close preview"><i class="bi bi-x-lg"></i></button>
+        <button type="button" class="lightbox-nav prev" id="videoLightboxPrev" aria-label="Previous reel"><i class="bi bi-chevron-left"></i></button>
+        <div class="lightbox-inner">
+            <video id="videoLightboxVideo" controls></video>
+            <h3 class="lightbox-title" id="videoLightboxTitle"></h3>
+            <div class="lightbox-meta">
+                <span id="videoLightboxCategory"></span>
+                <a href="#" id="videoLightboxDetailLink">View full frame page →</a>
+            </div>
+        </div>
+        <button type="button" class="lightbox-nav next" id="videoLightboxNext" aria-label="Next reel"><i class="bi bi-chevron-right"></i></button>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var triggers = Array.prototype.slice.call(document.querySelectorAll('#videoVault .lightbox-trigger'));
+        var lightbox = document.getElementById('videoLightbox');
+        var lbVideo = document.getElementById('videoLightboxVideo');
+        var lbTitle = document.getElementById('videoLightboxTitle');
+        var lbCategory = document.getElementById('videoLightboxCategory');
+        var lbDetailLink = document.getElementById('videoLightboxDetailLink');
+        var lbClose = document.getElementById('videoLightboxClose');
+        var lbPrev = document.getElementById('videoLightboxPrev');
+        var lbNext = document.getElementById('videoLightboxNext');
+        var currentIndex = 0;
+
+        function openLightbox(index) {
+            if (!triggers.length) return;
+            lbVideo.pause();
+            currentIndex = (index + triggers.length) % triggers.length;
+            var t = triggers[currentIndex];
+            lbVideo.src = t.getAttribute('data-src');
+            lbTitle.textContent = t.getAttribute('data-title');
+            lbCategory.textContent = t.getAttribute('data-category');
+            lbDetailLink.href = t.getAttribute('data-detail-url');
+            lightbox.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+            lbVideo.play().catch(function () {});
+        }
+
+        function closeLightbox() {
+            lbVideo.pause();
+            lbVideo.removeAttribute('src');
+            lbVideo.load();
+            lightbox.classList.remove('is-open');
+            document.body.style.overflow = '';
+        }
+
+        triggers.forEach(function (t) {
+            t.addEventListener('click', function (e) {
+                e.preventDefault();
+                openLightbox(parseInt(t.getAttribute('data-index'), 10));
+            });
+        });
+
+        lbClose.addEventListener('click', closeLightbox);
+        lbPrev.addEventListener('click', function () { openLightbox(currentIndex - 1); });
+        lbNext.addEventListener('click', function () { openLightbox(currentIndex + 1); });
+
+        lightbox.addEventListener('click', function (e) {
+            if (e.target === lightbox) closeLightbox();
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (!lightbox.classList.contains('is-open')) return;
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowLeft') openLightbox(currentIndex - 1);
+            if (e.key === 'ArrowRight') openLightbox(currentIndex + 1);
+        });
+    })();
+</script>
+{% endblock %}
