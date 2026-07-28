@@ -1,4 +1,5 @@
 # Video Gallery (Django)
+Application URL - https://djangovideogallery49.onrender.com/
 
 A simple Django app for uploading videos and browsing them in a gallery.
 Click any video in the gallery to open it on its own playback page.
