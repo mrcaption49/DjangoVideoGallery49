@@ -1,0 +1,354 @@
+{% extends 'gallery/base.html' %}
+
+{% block title %}Edit {{ video.title }}{% endblock %}
+
+{% block content %}
+<script>
+    // Runs immediately so this page never flashes the wrong theme on load.
+    (function () {
+        var saved = null;
+        try { saved = localStorage.getItem('vv-theme'); } catch (e) {}
+        var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', theme);
+    })();
+</script>
+<style>
+    /* ---------- Theme-aware overrides for base.html's chrome ---------- */
+    body {
+        background: #0a0a0b !important;
+        color: #f2f1ee !important;
+        transition: background-color 0.35s ease, color 0.35s ease;
+    }
+
+    .topbar {
+        background: #0f0f11 !important;
+        border-bottom: 1px solid #232326 !important;
+        transition: background-color 0.35s ease, border-color 0.35s ease;
+    }
+
+    .topbar .brand {
+        color: #f2f1ee !important;
+        font-family: 'Sora', 'Inter', sans-serif !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.01em;
+        transition: color 0.35s ease;
+    }
+
+    .btn {
+        background: #e0293f !important;
+        color: #ffffff !important;
+    }
+
+    .btn:hover {
+        opacity: 1 !important;
+        filter: brightness(1.12);
+    }
+
+    .messages li {
+        background: #141416 !important;
+        border: 1px solid #232326 !important;
+        color: #f2f1ee !important;
+        transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease;
+    }
+
+    /* Only one "add video" control lives on the gallery page's FAB — hide any
+       duplicate upload button the topbar shows while we're already on this page. */
+    .topbar .btn {
+        display: none !important;
+    }
+
+    html[data-theme="light"] body {
+        background: #f7f6f3 !important;
+        color: #1c1b19 !important;
+    }
+
+    html[data-theme="light"] .topbar {
+        background: #ffffff !important;
+        border-bottom: 1px solid #e6e3dc !important;
+    }
+
+    html[data-theme="light"] .topbar .brand {
+        color: #1c1b19 !important;
+    }
+
+    html[data-theme="light"] .messages li {
+        background: #ffffff !important;
+        border: 1px solid #e6e3dc !important;
+        color: #1c1b19 !important;
+    }
+
+    /* ---------- Theme tokens ---------- */
+    #uploadPage {
+        --bg: #0a0a0b;
+        --surface: #141416;
+        --surface-2: #1c1c1f;
+        --ink: #f2f1ee;
+        --ink-dim: #8f8d8a;
+        --accent: #e0293f;
+        --accent-dim: #7a1420;
+        --line: #232326;
+        --shadow: rgba(0, 0, 0, 0.6);
+        --error: #ff8a8a;
+
+        position: relative;
+        font-family: 'Inter', sans-serif;
+        color: var(--ink);
+        transition: color 0.35s ease;
+    }
+
+    html[data-theme="light"] #uploadPage {
+        --bg: #f7f6f3;
+        --surface: #ffffff;
+        --surface-2: #f0eee8;
+        --ink: #1c1b19;
+        --ink-dim: #78746c;
+        --accent: #d0203a;
+        --accent-dim: #f2c3ca;
+        --line: #e6e3dc;
+        --shadow: rgba(28, 27, 25, 0.1);
+        --error: #c22b2b;
+    }
+
+    #uploadPage * { box-sizing: border-box; }
+
+    /* ---------- Form card ---------- */
+    #uploadPage .form-wrap {
+        max-width: 560px;
+        margin: 4.5rem auto 0;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 2rem;
+        box-shadow: 0 1px 3px var(--shadow);
+        transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    #uploadPage .form-eyebrow {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin: 0 0 0.5rem;
+    }
+
+    #uploadPage h1 {
+        font-family: 'Sora', 'Inter', sans-serif;
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin: 0 0 1.6rem;
+        color: var(--ink);
+    }
+
+    #uploadPage .current-file {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin: -0.8rem 0 1.6rem;
+        padding: 0.65rem 0.9rem;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.78rem;
+        color: var(--ink-dim);
+    }
+
+    #uploadPage .current-file a {
+        color: var(--accent);
+        text-decoration: none;
+        word-break: break-all;
+    }
+
+    #uploadPage .current-file a:hover { text-decoration: underline; }
+
+    #uploadPage .field {
+        margin-bottom: 1.2rem;
+    }
+
+    #uploadPage .field label {
+        display: block;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--ink-dim);
+        margin-bottom: 0.5rem;
+    }
+
+    #uploadPage .field input[type="text"],
+    #uploadPage .field textarea,
+    #uploadPage .field input[type="file"] {
+        width: 100%;
+        padding: 0.65rem 0.8rem;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        color: var(--ink);
+        font-family: 'Inter', sans-serif;
+        font-size: 0.9rem;
+        transition: background-color 0.3s ease, border-color 0.2s ease, color 0.3s ease;
+    }
+
+    #uploadPage .field input[type="text"]:focus,
+    #uploadPage .field textarea:focus,
+    #uploadPage .field input[type="file"]:focus {
+        outline: none;
+        border-color: var(--accent);
+    }
+
+    #uploadPage .field textarea { resize: vertical; }
+
+    #uploadPage .field input[type="file"] {
+        padding: 0.5rem 0.8rem;
+        cursor: pointer;
+    }
+
+    #uploadPage .field-hint {
+        margin: 0.4rem 0 0;
+        font-size: 0.76rem;
+        color: var(--ink-dim);
+    }
+
+    #uploadPage .field input[type="file"]::file-selector-button,
+    #uploadPage .field input[type="file"]::-webkit-file-upload-button {
+        margin-right: 1rem;
+        padding: 0.5rem 1.1rem;
+        border: none;
+        border-radius: 5px;
+        background: var(--accent);
+        color: #ffffff;
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: filter 0.15s ease;
+    }
+
+    #uploadPage .field input[type="file"]:hover::file-selector-button,
+    #uploadPage .field input[type="file"]:hover::-webkit-file-upload-button {
+        filter: brightness(1.12);
+    }
+
+    #uploadPage .errorlist {
+        list-style: none;
+        padding: 0;
+        margin: 0.4rem 0 0;
+        color: var(--error);
+        font-size: 0.8rem;
+    }
+
+    #uploadPage .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 1.8rem;
+        padding-top: 1.4rem;
+        border-top: 1px solid var(--line);
+    }
+
+    #uploadPage .btn-cancel {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 1rem 1.6rem;
+        background: transparent;
+        color: var(--ink-dim);
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-decoration: none;
+        transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    #uploadPage .btn-cancel:hover {
+        color: var(--ink);
+        border-color: var(--accent-dim);
+        text-decoration: none;
+    }
+
+    #uploadPage .btn-upload {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        border: none;
+        border-radius: 8px;
+        padding: 1rem 3rem;
+        min-width: 220px;
+        background: var(--accent);
+        color: #ffffff;
+        font-family: 'Inter', sans-serif;
+        font-weight: 700;
+        font-size: 1.05rem;
+        cursor: pointer;
+        transition: filter 0.15s ease, transform 0.15s ease;
+    }
+
+    #uploadPage .btn-upload i {
+        font-size: 1.15rem;
+    }
+
+    #uploadPage .btn-upload:hover {
+        filter: brightness(1.12);
+        transform: translateY(-1px);
+    }
+
+    @media (max-width: 640px) {
+        #uploadPage .form-wrap { margin-top: 3.5rem; padding: 1.5rem; }
+        #uploadPage .form-actions { flex-wrap: wrap-reverse; }
+        #uploadPage .btn-upload,
+        #uploadPage .btn-cancel { width: 100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        #uploadPage * { transition: none !important; }
+    }
+</style>
+
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+<div id="uploadPage">
+    <div class="form-wrap">
+        <p class="form-eyebrow">Edit reel</p>
+        <h1>Edit video</h1>
+
+        <div class="current-file">
+            <i class="bi bi-film"></i>
+            Current file: <a href="{{ video.video_file.url }}" target="_blank" rel="noopener">{{ video.video_file.name }}</a>
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="field">
+                <label for="{{ form.title.id_for_label }}">Title</label>
+                {{ form.title }}
+                {{ form.title.errors }}
+            </div>
+
+            <div class="field">
+                <label for="{{ form.description.id_for_label }}">Description</label>
+                {{ form.description }}
+                {{ form.description.errors }}
+            </div>
+
+            <div class="field">
+                <label for="{{ form.video_file.id_for_label }}">Replace video file</label>
+                {{ form.video_file }}
+                <p class="field-hint">Leave empty to keep the current file.</p>
+                {{ form.video_file.errors }}
+            </div>
+
+            <div class="form-actions">
+                <a class="btn-cancel" href="{% url 'video_detail' video.pk %}">Cancel</a>
+                <button class="btn-upload" type="submit"><i class="bi bi-check2"></i> Save changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -29,3 +29,31 @@ def upload_video(request):
         form = VideoUploadForm()
 
     return render(request, 'gallery/upload.html', {'form': form})
+
+
+def edit_video(request, pk):
+    """Edit form for updating an existing video's title, description, or file."""
+    video = get_object_or_404(Video, pk=pk)
+
+    if request.method == 'POST':
+        form = VideoUploadForm(request.POST, request.FILES, instance=video)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Video updated successfully.')
+            return redirect('video_detail', pk=video.pk)
+    else:
+        form = VideoUploadForm(instance=video)
+
+    return render(request, 'gallery/edit.html', {'form': form, 'video': video})
+
+
+def delete_video(request, pk):
+    """Confirmation page + handler for permanently deleting a video."""
+    video = get_object_or_404(Video, pk=pk)
+
+    if request.method == 'POST':
+        video.delete()
+        messages.success(request, 'Video deleted.')
+        return redirect('gallery_list')
+
+    return render(request, 'gallery/video_confirm_delete.html', {'video': video})
