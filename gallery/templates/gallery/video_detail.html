@@ -3,49 +3,214 @@
 {% block title %}{{ video.title }}{% endblock %}
 
 {% block content %}
+<script>
+    // Runs immediately so this page never flashes the wrong theme on load.
+    (function () {
+        var saved = null;
+        try { saved = localStorage.getItem('vv-theme'); } catch (e) {}
+        var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', theme);
+    })();
+</script>
 <style>
-	.player-wrap {
-		max-width: 900px;
-		margin: 0 auto;
-	}
+    /* ---------- Theme-aware overrides for base.html's chrome ---------- */
+    body {
+        background: #0a0a0b !important;
+        color: #f2f1ee !important;
+        transition: background-color 0.35s ease, color 0.35s ease;
+    }
 
-	.player-wrap video {
-		width: 100%;
-		max-height: 65vh;
-		border-radius: 10px;
-		background: #000;
-		display: block;
-	}
+    .topbar {
+        background: #0f0f11 !important;
+        border-bottom: 1px solid #232326 !important;
+        transition: background-color 0.35s ease, border-color 0.35s ease;
+    }
 
-	.player-wrap h1 {
-		margin: 1.25rem 0 0.4rem;
-	}
+    .topbar .brand {
+        color: #f2f1ee !important;
+        font-family: 'Sora', 'Inter', sans-serif !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.01em;
+        transition: color 0.35s ease;
+    }
 
-	.meta {
-		color: var(--ink-dim);
-		font-size: 0.85rem;
-		margin: 0 0 1rem;
-	}
+    .btn {
+        background: #e0293f !important;
+        color: #ffffff !important;
+    }
 
-	.description {
-		color: var(--ink);
-		white-space: pre-line;
-	}
+    .btn:hover {
+        opacity: 1 !important;
+        filter: brightness(1.12);
+    }
 
-	.back-link {
-		display: inline-block;
-		margin-bottom: 1.25rem;
-		font-size: 0.9rem;
-	}
+    .messages li {
+        background: #141416 !important;
+        border: 1px solid #232326 !important;
+        color: #f2f1ee !important;
+        transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease;
+    }
+
+    /* This page's own "add video" action lives on the gallery's floating button. */
+    .topbar .btn {
+        display: none !important;
+    }
+
+    html[data-theme="light"] body {
+        background: #f7f6f3 !important;
+        color: #1c1b19 !important;
+    }
+
+    html[data-theme="light"] .topbar {
+        background: #ffffff !important;
+        border-bottom: 1px solid #e6e3dc !important;
+    }
+
+    html[data-theme="light"] .topbar .brand {
+        color: #1c1b19 !important;
+    }
+
+    html[data-theme="light"] .messages li {
+        background: #ffffff !important;
+        border: 1px solid #e6e3dc !important;
+        color: #1c1b19 !important;
+    }
+
+    /* ---------- Theme tokens ---------- */
+    #playerPage {
+        --bg: #0a0a0b;
+        --surface: #141416;
+        --surface-2: #1c1c1f;
+        --ink: #f2f1ee;
+        --ink-dim: #8f8d8a;
+        --accent: #e0293f;
+        --accent-dim: #7a1420;
+        --line: #232326;
+        --shadow: rgba(0, 0, 0, 0.6);
+
+        font-family: 'Inter', sans-serif;
+        color: var(--ink);
+        transition: color 0.35s ease;
+    }
+
+    html[data-theme="light"] #playerPage {
+        --bg: #f7f6f3;
+        --surface: #ffffff;
+        --surface-2: #f0eee8;
+        --ink: #1c1b19;
+        --ink-dim: #78746c;
+        --accent: #d0203a;
+        --accent-dim: #f2c3ca;
+        --line: #e6e3dc;
+        --shadow: rgba(28, 27, 25, 0.1);
+    }
+
+    #playerPage * { box-sizing: border-box; }
+
+    /* ---------- Layout ---------- */
+    #playerPage .player-wrap {
+        max-width: 900px;
+        margin: 2rem auto 0;
+    }
+
+    #playerPage .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-bottom: 1.4rem;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--ink-dim);
+        text-decoration: none;
+        transition: color 0.15s ease;
+    }
+
+    #playerPage .back-link:hover {
+        color: var(--accent);
+    }
+
+    /* ---------- Video ---------- */
+    #playerPage video {
+        width: 100%;
+        max-height: 65vh;
+        border-radius: 10px;
+        background: #000;
+        display: block;
+        box-shadow: 0 20px 50px var(--shadow);
+    }
+
+    /* ---------- Title & meta ---------- */
+    #playerPage .title-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin: 1.5rem 0 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    #playerPage h1 {
+        font-family: 'Sora', 'Inter', sans-serif;
+        font-weight: 700;
+        font-size: 1.5rem;
+        line-height: 1.3;
+        margin: 0;
+        color: var(--ink);
+    }
+
+    #playerPage .category-pill {
+        flex: none;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 0.35rem 0.85rem;
+        white-space: nowrap;
+    }
+
+    #playerPage .meta {
+        font-family: 'Space Mono', monospace;
+        color: var(--ink-dim);
+        font-size: 0.8rem;
+        letter-spacing: 0.02em;
+        margin: 0 0 1.4rem;
+        padding-bottom: 1.2rem;
+        border-bottom: 1px solid var(--line);
+    }
+
+    #playerPage .description {
+        color: var(--ink);
+        font-size: 0.96rem;
+        line-height: 1.65;
+        white-space: pre-line;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        #playerPage * { transition: none !important; }
+    }
 </style>
 
-<div class="player-wrap">
-	<a class="back-link" href="{% url 'gallery_list' %}">&larr; Back to gallery</a>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
-	<video src="{{ video.video_file.url }}" controls autoplay></video>
+<div id="playerPage">
+    <div class="player-wrap">
+        <a class="back-link" href="{% url 'gallery_list' %}"><i class="bi bi-arrow-left"></i> Back to gallery</a>
 
-	<h1>{{ video.title }}</h1>
-	<p class="meta">Uploaded {{ video.uploaded_at|date:"M d, Y" }}</p>
-	<p class="description">{{ video.description|default:"No description." }}</p>
+        <video src="{{ video.video_file.url }}" controls autoplay></video>
+
+        <div class="title-row">
+            <h1>{{ video.title }}</h1>
+            {% if video.category %}<span class="category-pill">{{ video.category }}</span>{% endif %}
+        </div>
+        <p class="meta">Uploaded {{ video.uploaded_at|date:"M d, Y" }}</p>
+        <p class="description">{{ video.description|default:"No description." }}</p>
+    </div>
 </div>
 {% endblock %}

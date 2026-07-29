@@ -1,252 +1,201 @@
 {% extends 'gallery/base.html' %}
 
-{% block title %}Video Gallery{% endblock %}
+{% block title %}mrcaption49{% endblock %}
 
 {% block content %}
+<script>
+    // Runs immediately so the page never flashes the wrong theme on load.
+    (function () {
+        var saved = null;
+        try { saved = localStorage.getItem('vv-theme'); } catch (e) {}
+        var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', theme);
+    })();
+</script>
 <style>
-    /* ---------- Light-theme overrides for base.html's chrome ---------- */
+    /* ---------- Theme-aware overrides for base.html's chrome ---------- */
+    /* Default = dark. html[data-theme="light"] flips every token below. */
     body {
-        background: #f7f3ea !important;
-        color: #2c2822 !important;
+        background: #0a0a0b !important;
+        color: #f2f1ee !important;
+        transition: background-color 0.35s ease, color 0.35s ease;
     }
 
     .topbar {
-        background: #ffffff !important;
-        border-bottom: 1px solid #ded3bc !important;
+        background: #0f0f11 !important;
+        border-bottom: 1px solid #232326 !important;
+        transition: background-color 0.35s ease, border-color 0.35s ease;
     }
 
     .topbar .brand {
-        color: #2c2822 !important;
+        color: #f2f1ee !important;
+        font-family: 'Sora', 'Inter', sans-serif !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.01em;
+        transition: color 0.35s ease;
     }
 
     .btn {
-        background: #c17d2e !important;
+        background: #e0293f !important;
         color: #ffffff !important;
     }
 
     .btn:hover {
         opacity: 1 !important;
-        filter: brightness(1.08);
+        filter: brightness(1.12);
     }
 
     .messages li {
-        background: #f0e9da !important;
-        border: 1px solid #ded3bc !important;
-        color: #2c2822 !important;
+        background: #141416 !important;
+        border: 1px solid #232326 !important;
+        color: #f2f1ee !important;
+        transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease;
     }
 
     .container {
         max-width: 1800px !important;
     }
 
-    /* ---------- Theme tokens (matched to the PixelVault photo gallery) ---------- */
+    /* Only one "add video" control on this page — the floating button. */
+    .topbar .btn {
+        display: none !important;
+    }
+
+    html[data-theme="light"] body {
+        background: #f7f6f3 !important;
+        color: #1c1b19 !important;
+    }
+
+    html[data-theme="light"] .topbar {
+        background: #ffffff !important;
+        border-bottom: 1px solid #e6e3dc !important;
+    }
+
+    html[data-theme="light"] .topbar .brand {
+        color: #1c1b19 !important;
+    }
+
+    html[data-theme="light"] .messages li {
+        background: #ffffff !important;
+        border: 1px solid #e6e3dc !important;
+        color: #1c1b19 !important;
+    }
+
+    /* ---------- Theme tokens ---------- */
     #videoVault {
-        --bg: #f7f3ea;
-        --surface: #ffffff;
-        --surface-2: #f0e9da;
-        --ink: #2c2822;
-        --ink-dim: #8a7f6b;
-        --amber: #c17d2e;
-        --amber-dim: #d9ac6e;
-        --rust: #b5502e;
-        --line: #ded3bc;
-        --sprocket-bg: #2c2822;
-        --shadow: rgba(44, 40, 34, 0.08);
-        --skeleton-a: #efe8d8;
-        --skeleton-b: #f8f4ea;
+        --bg: #0a0a0b;
+        --surface: #141416;
+        --surface-2: #1c1c1f;
+        --ink: #f2f1ee;
+        --ink-dim: #8f8d8a;
+        --accent: #e0293f;
+        --accent-dim: #7a1420;
+        --line: #232326;
+        --shadow: rgba(0, 0, 0, 0.6);
+        --skeleton-a: #141416;
+        --skeleton-b: #1c1c1f;
 
         font-family: 'Inter', sans-serif;
         color: var(--ink);
+        transition: color 0.35s ease;
+    }
+
+    html[data-theme="light"] #videoVault {
+        --bg: #f7f6f3;
+        --surface: #ffffff;
+        --surface-2: #f0eee8;
+        --ink: #1c1b19;
+        --ink-dim: #78746c;
+        --accent: #d0203a;
+        --accent-dim: #f2c3ca;
+        --line: #e6e3dc;
+        --shadow: rgba(28, 27, 25, 0.1);
+        --skeleton-a: #f0eee8;
+        --skeleton-b: #ffffff;
     }
 
     #videoVault * { box-sizing: border-box; }
 
-    /* ---------- Masthead ---------- */
-    #videoVault .masthead {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        border-bottom: 1px solid var(--line);
-        padding-bottom: 1.1rem;
-        margin-bottom: 2.2rem;
-        gap: 1rem;
-        flex-wrap: wrap;
+    #videoVault .frame,
+    #videoVault .btn-view,
+    #videoVault .frame-no,
+    #videoVault .frame-runtime {
+        transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease,
+            transform 0.25s ease, box-shadow 0.25s ease;
     }
 
-    #videoVault .masthead-left {
-        display: flex;
-        align-items: baseline;
-        gap: 0.9rem;
-    }
+    /* ---------- Floating controls (replaces the old masthead + sidebar) ---------- */
+    #videoVault { position: relative; padding-top: 0.5rem; }
 
-    #videoVault h1 {
-        font-family: 'Fraunces', serif;
-        font-optical-sizing: auto;
-        font-weight: 600;
-        font-size: 1.9rem;
-        letter-spacing: 0.01em;
-        margin: 0;
-    }
-
-    #videoVault h1 span {
-        color: var(--amber);
-        font-style: italic;
-        font-weight: 500;
-    }
-
-    #videoVault .roll-meta {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 0.72rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--ink-dim);
-    }
-
-    /* ---------- Layout: index sidebar + reel grid ---------- */
-    #videoVault .layout {
-        display: grid;
-        grid-template-columns: 260px 1fr;
-        gap: 2.5rem;
-        align-items: start;
-    }
-
-    @media (max-width: 860px) {
-        #videoVault .layout { grid-template-columns: 1fr; }
-    }
-
-    #videoVault .sidebar-col { position: sticky; top: 1.75rem; }
-
-    #videoVault .index-card {
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 2px;
-        position: relative;
-        padding-top: 0.4rem;
-        box-shadow: 0 1px 3px var(--shadow);
-    }
-
-    #videoVault .index-card::before,
-    #videoVault .index-card::after {
-        content: "";
+    #videoVault .theme-toggle {
         position: absolute;
-        left: 14px;
-        right: 14px;
-        height: 6px;
-        background-image: repeating-linear-gradient(90deg, var(--bg) 0 6px, transparent 6px 12px);
-        opacity: 0.8;
-    }
-
-    #videoVault .index-card::before { top: 6px; }
-    #videoVault .index-card::after { bottom: 6px; }
-
-    #videoVault .index-head {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 0.7rem;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--ink-dim);
-        text-align: center;
-        padding: 1rem 0.75rem 0.85rem;
-        border-bottom: 1px dashed var(--line);
-        margin: 0.5rem 0.75rem 0;
-    }
-
-    #videoVault .index-list {
-        list-style: none;
-        margin: 0;
-        padding: 0.4rem 0.75rem 1.1rem;
-    }
-
-    #videoVault .index-list li a {
-        display: flex;
+        top: 0;
+        right: 0;
+        display: inline-flex;
         align-items: center;
-        gap: 0.55rem;
-        text-decoration: none;
-        padding: 0.55rem 0.5rem;
-        border-radius: 3px;
-        font-size: 0.92rem;
-        color: var(--ink);
-        transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease;
-    }
-
-    #videoVault .index-list li a::before {
-        content: "";
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        border: 1px solid var(--amber-dim);
+        width: 52px;
+        height: 28px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--surface-2);
+        cursor: pointer;
+        padding: 0;
         flex: none;
+        transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
-    #videoVault .index-list li a.is-active {
-        color: var(--amber);
-        background: var(--surface-2);
-    }
+    #videoVault .theme-toggle:hover { border-color: var(--accent-dim); }
 
-    #videoVault .index-list li a.is-active::before {
-        background: var(--amber);
-        border-color: var(--amber);
-    }
-
-    #videoVault .index-list li a:hover {
-        background: var(--surface-2);
-        color: var(--amber);
-        padding-left: 0.75rem;
-    }
-
-    #videoVault .index-list li a:hover::before {
-        background: var(--amber);
-        border-color: var(--amber);
-    }
-
-    #videoVault .add-video-row {
+    #videoVault .theme-toggle .knob {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #ffffff;
         display: flex;
         align-items: center;
-        gap: 0.85rem;
-        padding: 1rem 1rem 1.2rem;
-        border-top: 1px dashed var(--line);
-        margin: 0 0.75rem;
+        justify-content: center;
+        font-size: 0.7rem;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
+    }
+
+    html[data-theme="light"] #videoVault .theme-toggle .knob {
+        transform: translateX(24px);
     }
 
     #videoVault .shutter-btn {
+        position: fixed;
+        right: 2rem;
+        bottom: 2rem;
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 46px;
-        height: 46px;
-        flex: none;
+        width: 68px;
+        height: 68px;
         border-radius: 50%;
-        background:
-            radial-gradient(circle at center, var(--surface) 0 34%, transparent 35%),
-            conic-gradient(var(--amber) 0turn, var(--amber-dim) 1turn);
-        color: var(--bg);
+        background: var(--accent);
+        color: #ffffff;
         text-decoration: none;
-        font-size: 1.15rem;
-        transition: transform 0.2s ease, filter 0.2s ease;
+        font-size: 1.7rem;
+        box-shadow: 0 12px 30px var(--shadow);
+        transition: filter 0.15s ease, transform 0.15s ease;
+        z-index: 20;
     }
-
-    #videoVault .shutter-btn i { color: #ffffff; position: relative; }
 
     #videoVault .shutter-btn:hover {
-        transform: rotate(45deg);
-        filter: brightness(1.08);
+        filter: brightness(1.12);
+        transform: scale(1.06);
     }
 
-    #videoVault .add-video-copy .t { font-size: 0.88rem; font-weight: 500; display: block; }
-
-    #videoVault .add-video-copy .s {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 0.68rem;
-        color: var(--ink-dim);
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-    }
-
-    /* ---------- Reel grid (fixed-size cards, three across) ---------- */
+    /* ---------- Tile grid ---------- */
     #videoVault .grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 1.75rem;
+        gap: 1.5rem;
+        margin-top: 3rem;
     }
 
     @media (max-width: 1100px) {
@@ -259,33 +208,18 @@
 
     #videoVault .frame {
         background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 2px;
+        border-radius: 6px;
         overflow: hidden;
         position: relative;
-        transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        transition: transform 0.25s ease, box-shadow 0.25s ease, z-index 0s;
         box-shadow: 0 1px 3px var(--shadow);
     }
 
     #videoVault .frame:hover,
     #videoVault .frame:focus-within {
-        transform: translateY(-3px);
-        border-color: var(--amber-dim);
-        box-shadow: 0 8px 20px var(--shadow);
-    }
-
-    #videoVault .frame .sprockets {
-        display: flex;
-        justify-content: space-between;
-        padding: 6px 10px;
-        background: var(--sprocket-bg);
-    }
-
-    #videoVault .frame .sprockets span {
-        width: 6px;
-        height: 9px;
-        background: var(--bg);
-        border-radius: 1px;
+        transform: scale(1.045);
+        box-shadow: 0 16px 34px var(--shadow);
+        z-index: 5;
     }
 
     #videoVault .shot {
@@ -299,10 +233,24 @@
     #videoVault .video-thumbnail {
         display: block;
         width: 100%;
-        height: 260px;
+        height: 230px;
         object-fit: cover;
         pointer-events: none;
         background: #000;
+    }
+
+    #videoVault .shot::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(10,10,11,0) 45%, rgba(10,10,11,0.92) 100%);
+        opacity: 0;
+        transition: opacity 0.25s ease;
+    }
+
+    #videoVault .frame:hover .shot::after,
+    #videoVault .frame:focus-within .shot::after {
+        opacity: 1;
     }
 
     #videoVault .play-badge {
@@ -314,11 +262,11 @@
     }
 
     #videoVault .play-badge span {
-        width: 52px;
-        height: 52px;
+        width: 50px;
+        height: 50px;
         border-radius: 50%;
-        background: rgba(15, 13, 10, 0.68);
-        border: 1px solid rgba(241, 234, 217, 0.35);
+        background: rgba(10, 10, 11, 0.55);
+        border: 1px solid rgba(242, 241, 238, 0.35);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -329,66 +277,58 @@
         content: "";
         border-style: solid;
         border-width: 8px 0 8px 13px;
-        border-color: transparent transparent transparent #f1ead9;
+        border-color: transparent transparent transparent #f2f1ee;
         margin-left: 4px;
     }
 
     #videoVault .frame:hover .play-badge span {
         transform: scale(1.08);
-        background: var(--amber);
+        background: var(--accent);
+        border-color: var(--accent);
     }
 
     #videoVault .frame-no {
         position: absolute;
         top: 8px;
         left: 8px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 0.68rem;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.66rem;
         letter-spacing: 0.04em;
-        color: var(--amber-dim);
-        background: rgba(15, 13, 10, 0.78);
+        color: var(--ink);
+        background: rgba(10, 10, 11, 0.7);
         padding: 2px 7px;
-        border-radius: 2px;
-        opacity: 0;
-        transform: translateY(-3px);
-        transition: opacity 0.2s ease, transform 0.2s ease;
-    }
-
-    #videoVault .frame:hover .frame-no,
-    #videoVault .frame:focus-within .frame-no {
-        opacity: 1;
-        transform: translateY(0);
+        border-radius: 3px;
     }
 
     #videoVault .frame-runtime {
         position: absolute;
         bottom: 8px;
         right: 8px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 0.68rem;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.66rem;
         letter-spacing: 0.03em;
-        color: #f1ead9;
-        background: rgba(15, 13, 10, 0.78);
+        color: var(--ink);
+        background: rgba(10, 10, 11, 0.7);
         padding: 2px 7px;
-        border-radius: 2px;
+        border-radius: 3px;
     }
 
-    #videoVault .frame-body { padding: 0.85rem 0.95rem 1rem; text-align: left; }
+    #videoVault .frame-body { padding: 0.8rem 0.9rem 1rem; text-align: left; }
 
     #videoVault .frame-category {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 0.68rem;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.66rem;
         text-transform: uppercase;
         letter-spacing: 0.08em;
         color: var(--ink-dim);
-        margin: 0 0 0.45rem;
+        margin: 0 0 0.4rem;
     }
 
-    #videoVault .frame-category em { font-style: normal; color: var(--amber); }
+    #videoVault .frame-category em { font-style: normal; color: var(--accent); }
 
     #videoVault .frame-title {
-        font-family: 'Fraunces', serif;
-        font-weight: 500;
+        font-family: 'Sora', 'Inter', sans-serif;
+        font-weight: 600;
         font-size: 1.02rem;
         margin: 0 0 0.35rem;
         line-height: 1.3;
@@ -396,7 +336,7 @@
     }
 
     #videoVault .frame-desc {
-        font-size: 0.83rem;
+        font-size: 0.82rem;
         line-height: 1.45;
         color: var(--ink-dim);
         margin: 0 0 0.85rem;
@@ -412,18 +352,18 @@
         text-align: center;
         text-decoration: none;
         padding: 0.5rem 0;
-        font-size: 0.82rem;
-        font-weight: 500;
-        letter-spacing: 0.04em;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
         color: var(--ink);
         border: 1px solid var(--line);
-        border-radius: 2px;
+        border-radius: 4px;
         transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
     }
 
     #videoVault .btn-view:hover {
-        background: var(--amber);
-        border-color: var(--amber);
+        background: var(--accent);
+        border-color: var(--accent);
         color: #ffffff;
     }
 
@@ -432,16 +372,15 @@
         text-align: center;
         padding: 4rem 1.5rem;
         border: 1px dashed var(--line);
-        border-radius: 4px;
+        border-radius: 8px;
     }
 
-    #videoVault .empty-state .bi { font-size: 1.8rem; color: var(--amber-dim); }
+    #videoVault .empty-state .bi { font-size: 1.8rem; color: var(--accent); }
 
     #videoVault .empty-state h3 {
-        font-family: 'Fraunces', serif;
-        font-weight: 500;
-        font-style: italic;
-        color: var(--ink-dim);
+        font-family: 'Sora', 'Inter', sans-serif;
+        font-weight: 600;
+        color: var(--ink);
         margin: 0.75rem 0 0.35rem;
     }
 
@@ -454,20 +393,20 @@
         text-decoration: none;
         padding: 0.6rem 1.2rem;
         border-radius: 999px;
-        background: var(--amber);
+        background: var(--accent);
         color: #ffffff;
         font-size: 0.85rem;
-        font-weight: 500;
+        font-weight: 600;
         transition: filter 0.15s ease;
     }
 
-    #videoVault .empty-cta:hover { filter: brightness(1.08); }
+    #videoVault .empty-cta:hover { filter: brightness(1.12); }
 
     /* ---------- Screening room (video lightbox) ---------- */
     #videoVault .lightbox {
         position: fixed;
         inset: 0;
-        background: rgba(15, 13, 10, 0.9);
+        background: rgba(5, 5, 6, 0.95);
         display: none;
         align-items: center;
         justify-content: center;
@@ -490,16 +429,16 @@
     #videoVault .lightbox-inner video {
         width: 100%;
         max-height: 66vh;
-        border-radius: 2px;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        border-radius: 6px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
         background: #000;
     }
 
     #videoVault .lightbox-title {
-        font-family: 'Fraunces', serif;
-        font-weight: 500;
+        font-family: 'Sora', 'Inter', sans-serif;
+        font-weight: 600;
         font-size: 1.15rem;
-        color: #f1ead9;
+        color: #f2f1ee;
         text-align: center;
         margin: 0;
     }
@@ -508,21 +447,21 @@
         display: flex;
         align-items: center;
         gap: 1rem;
-        font-family: 'IBM Plex Mono', monospace;
+        font-family: 'Space Mono', monospace;
         font-size: 0.75rem;
-        color: #d8cdb6;
+        color: #a8a5a0;
         text-transform: uppercase;
         letter-spacing: 0.06em;
     }
 
-    #videoVault .lightbox-meta a { color: var(--amber); text-decoration: underline; }
+    #videoVault .lightbox-meta a { color: #e0293f; text-decoration: underline; }
 
     #videoVault .lightbox-close,
     #videoVault .lightbox-nav {
         position: absolute;
         background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        color: #f1ead9;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #f2f1ee;
         width: 42px;
         height: 42px;
         border-radius: 50%;
@@ -547,7 +486,7 @@
 
     #videoVault a:focus-visible,
     #videoVault button:focus-visible {
-        outline: 2px solid var(--amber);
+        outline: 2px solid var(--accent);
         outline-offset: 2px;
     }
 
@@ -556,108 +495,69 @@
     }
 </style>
 
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
 <div id="videoVault">
-    <div class="masthead">
-        <div class="masthead-left">
-            <h1>mrcaption<span>49</span></h1>
-            <div class="roll-meta">{{ videos|length }} reel{{ videos|length|pluralize }} — {% now "M Y" %}</div>
-        </div>
-    </div>
+    <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle light and dark theme" aria-pressed="false">
+        <span class="knob"><i class="bi bi-moon-stars-fill" id="themeToggleIcon"></i></span>
+    </button>
 
-    <div class="layout">
-        <!-- Sidebar -->
-        <div class="sidebar-col">
-            <div class="index-card">
-                <div class="index-head">Screening Index</div>
-                <ul class="index-list">
-                    <li><a href="{% url 'gallery_list' %}" class="{% if not request.GET.category %}is-active{% endif %}">All reels</a></li>
-                    {% for category in categories %}
-                    <li>
-                        <a href="{% url 'gallery_list' %}?category={{ category.name }}"
-                           class="{% if request.GET.category == category.name %}is-active{% endif %}">
-                            {{ category.name }}
-                        </a>
-                    </li>
-                    {% endfor %}
-                </ul>
+    <a href="{% url 'upload_video' %}" class="shutter-btn" aria-label="Add video">
+        <i class="bi bi-plus-lg"></i>
+    </a>
 
-                <div class="add-video-row">
-                    <a href="{% url 'upload_video' %}" class="shutter-btn" aria-label="Add video">
-                        <i class="bi bi-plus-lg"></i>
-                    </a>
-                    <span class="add-video-copy">
-                        <span class="t">Add a video</span>
-                        <span class="s">Load new reel</span>
-                    </span>
+    <!-- Tile grid -->
+    <div>
+        {% if videos %}
+        <div class="grid">
+            {% for video in videos %}
+            <div class="frame">
+                <a href="{% url 'video_detail' video.pk %}"
+                   class="shot lightbox-trigger"
+                   aria-label="Play {{ video.title }}"
+                   data-index="{{ forloop.counter0 }}"
+                   data-title="{{ video.title }}"
+                   data-category="{{ video.category|default:'Unsorted' }}"
+                   data-detail-url="{% url 'video_detail' video.pk %}"
+                   data-src="{{ video.video_file.url }}">
+                    <video class="video-thumbnail" src="{{ video.video_file.url }}" preload="metadata" muted></video>
+                    <span class="play-badge"><span></span></span>
+                    <span class="frame-no">{{ forloop.counter|stringformat:"02d" }}</span>
+                </a>
+
+                <div class="frame-body">
+                    <p class="frame-category">Category — <em>{{ video.category|default:"Unsorted" }}</em></p>
+                    <h3 class="frame-title">{{ video.title }}</h3>
+                    <p class="frame-desc">{{ video.description }}</p>
+                    <a href="{% url 'video_detail' video.pk %}" class="btn-view">Play video</a>
                 </div>
             </div>
+            {% endfor %}
         </div>
-
-        <!-- Reel grid -->
-        <div>
-            {% if videos %}
-            <div class="grid">
-                {% for video in videos %}
-                <div class="frame">
-                    <div class="sprockets">
-                        <span></span><span></span><span></span><span></span><span></span>
-                        <span></span><span></span><span></span><span></span><span></span>
-                    </div>
-
-                    <a href="{% url 'video_detail' video.pk %}"
-                       class="shot lightbox-trigger"
-                       aria-label="Play {{ video.title }}"
-                       data-index="{{ forloop.counter0 }}"
-                       data-title="{{ video.title }}"
-                       data-category="{{ video.category|default:'Unsorted' }}"
-                       data-detail-url="{% url 'video_detail' video.pk %}"
-                       data-src="{{ video.video_file.url }}">
-                        <video class="video-thumbnail" src="{{ video.video_file.url }}" preload="metadata" muted></video>
-                        <span class="play-badge"><span></span></span>
-                        <span class="frame-no">No. {{ forloop.counter|stringformat:"03d" }}</span>
-                    </a>
-
-                    <div class="sprockets">
-                        <span></span><span></span><span></span><span></span><span></span>
-                        <span></span><span></span><span></span><span></span><span></span>
-                    </div>
-
-                    <div class="frame-body">
-                        <p class="frame-category">Category — <em>{{ video.category|default:"Unsorted" }}</em></p>
-                        <h3 class="frame-title">{{ video.title }}</h3>
-                        <p class="frame-desc">{{ video.description }}</p>
-                        <a href="{% url 'video_detail' video.pk %}" class="btn-view">Play video</a>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="empty-state">
-                <i class="bi bi-camera-reels"></i>
-                <h3>No reels loaded yet</h3>
-                <p>Upload your first clip to start the screening room.</p>
-                <a href="{% url 'upload_video' %}" class="empty-cta"><i class="bi bi-plus-lg"></i> Add a video</a>
-            </div>
-            {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-camera-reels"></i>
+            <h3>No videos yet</h3>
+            <p>Upload your first clip to start the library.</p>
+            <a href="{% url 'upload_video' %}" class="empty-cta"><i class="bi bi-plus-lg"></i> Add a video</a>
         </div>
+        {% endif %}
     </div>
 
     <!-- Screening room (video lightbox) -->
     <div class="lightbox" id="videoLightbox" role="dialog" aria-modal="true" aria-label="Video preview">
         <button type="button" class="lightbox-close" id="videoLightboxClose" aria-label="Close preview"><i class="bi bi-x-lg"></i></button>
-        <button type="button" class="lightbox-nav prev" id="videoLightboxPrev" aria-label="Previous reel"><i class="bi bi-chevron-left"></i></button>
+        <button type="button" class="lightbox-nav prev" id="videoLightboxPrev" aria-label="Previous video"><i class="bi bi-chevron-left"></i></button>
         <div class="lightbox-inner">
             <video id="videoLightboxVideo" controls></video>
             <h3 class="lightbox-title" id="videoLightboxTitle"></h3>
             <div class="lightbox-meta">
                 <span id="videoLightboxCategory"></span>
-                <a href="#" id="videoLightboxDetailLink">View full frame page →</a>
+                <a href="#" id="videoLightboxDetailLink">View full page →</a>
             </div>
         </div>
-        <button type="button" class="lightbox-nav next" id="videoLightboxNext" aria-label="Next reel"><i class="bi bi-chevron-right"></i></button>
+        <button type="button" class="lightbox-nav next" id="videoLightboxNext" aria-label="Next video"><i class="bi bi-chevron-right"></i></button>
     </div>
 </div>
 
@@ -673,6 +573,26 @@
         var lbPrev = document.getElementById('videoLightboxPrev');
         var lbNext = document.getElementById('videoLightboxNext');
         var currentIndex = 0;
+
+        // ---- Theme toggle ----
+        var themeToggle = document.getElementById('themeToggle');
+        var themeIcon = document.getElementById('themeToggleIcon');
+
+        function syncToggleUI(theme) {
+            var isLight = theme === 'light';
+            themeToggle.setAttribute('aria-pressed', isLight ? 'true' : 'false');
+            themeIcon.className = isLight ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+        }
+
+        syncToggleUI(document.documentElement.getAttribute('data-theme') || 'dark');
+
+        themeToggle.addEventListener('click', function () {
+            var current = document.documentElement.getAttribute('data-theme') || 'dark';
+            var next = current === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            syncToggleUI(next);
+            try { localStorage.setItem('vv-theme', next); } catch (e) {}
+        });
 
         function openLightbox(index) {
             if (!triggers.length) return;
