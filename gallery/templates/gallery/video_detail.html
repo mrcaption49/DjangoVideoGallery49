@@ -18,30 +18,12 @@
         background: #0a0a0b !important;
         color: #f2f1ee !important;
         transition: background-color 0.35s ease, color 0.35s ease;
+        margin: 0 !important;
     }
 
+    /* Hide the gallery topbar entirely on this page for a full, immersive view */
     .topbar {
-        background: #0f0f11 !important;
-        border-bottom: 1px solid #232326 !important;
-        transition: background-color 0.35s ease, border-color 0.35s ease;
-    }
-
-    .topbar .brand {
-        color: #f2f1ee !important;
-        font-family: 'Sora', 'Inter', sans-serif !important;
-        font-weight: 700 !important;
-        letter-spacing: 0.01em;
-        transition: color 0.35s ease;
-    }
-
-    .btn {
-        background: #e0293f !important;
-        color: #ffffff !important;
-    }
-
-    .btn:hover {
-        opacity: 1 !important;
-        filter: brightness(1.12);
+        display: none !important;
     }
 
     .messages li {
@@ -51,22 +33,8 @@
         transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease;
     }
 
-    /* This page's own "add video" action lives on the gallery's floating button. */
-    .topbar .btn {
-        display: none !important;
-    }
-
     html[data-theme="light"] body {
         background: #f7f6f3 !important;
-        color: #1c1b19 !important;
-    }
-
-    html[data-theme="light"] .topbar {
-        background: #ffffff !important;
-        border-bottom: 1px solid #e6e3dc !important;
-    }
-
-    html[data-theme="light"] .topbar .brand {
         color: #1c1b19 !important;
     }
 
