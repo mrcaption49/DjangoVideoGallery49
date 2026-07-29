@@ -578,6 +578,17 @@
         var lbNext = document.getElementById('videoLightboxNext');
         var currentIndex = 0;
 
+        // ---- Better thumbnail frames ----
+        // Frame 0 often lands on an intro caption/black frame, so nudge each
+        // thumbnail video a little further in once its metadata is ready.
+        var thumbs = Array.prototype.slice.call(document.querySelectorAll('#videoVault .video-thumbnail'));
+        thumbs.forEach(function (v) {
+            v.addEventListener('loadedmetadata', function () {
+                var target = v.duration && isFinite(v.duration) ? Math.min(2, v.duration * 0.1) : 1;
+                try { v.currentTime = target; } catch (e) {}
+            });
+        });
+
         // ---- Theme toggle ----
         var themeToggle = document.getElementById('themeToggle');
         var themeIcon = document.getElementById('themeToggleIcon');
